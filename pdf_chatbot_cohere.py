@@ -2,18 +2,22 @@ import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain_community.llms import Ollama
+from langchain.chains import ConversationalRetrievalChain
+from langchain_community.llms import Cohere
 from tempfile import NamedTemporaryFile
+import os
 
-st.set_page_config(page_title="PDF Chatbot (Local)", layout="wide")
-st.title("💬 Chat with your PDF — Fully Offline!")
+# Setup API key
+os.environ["COHERE_API_KEY"] = st.secrets["COHERE_API_KEY"]
+
+st.set_page_config(page_title="Chat with your PDF (Cohere)", layout="wide")
+st.title("📚 PDF Chatbot (Powered by Cohere)")
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
 if uploaded_file:
-    with st.spinner("Indexing PDF..."):
+    with st.spinner("Reading and indexing PDF..."):
         with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
             tmp_file.write(uploaded_file.read())
             pdf_path = tmp_file.name
@@ -25,7 +29,18 @@ if uploaded_file:
         vectorstore = FAISS.from_documents(pages, embedding=embeddings)
 
         memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-        llm = Ollama(model="mistral")  # change to llama3 or gemma if you want
+
+        llm = Cohere(
+            model="command",  # or "command-light"
+            temperature=0.3,
+            cohere_api_key=st.secrets["COHERE_API_KEY"]
+        )
+
+        # llm = Cohere(
+        #    model="command-r",  # Or use "command-nightly" for the latest
+        #    temperature=0.3,
+        #    cohere_api_key=st.secrets["COHERE_API_KEY"]
+        #)
 
         qa_chain = ConversationalRetrievalChain.from_llm(
             llm=llm,
@@ -36,7 +51,7 @@ if uploaded_file:
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
 
-        query = st.text_input("Ask something about your PDF:")
+        query = st.text_input("Ask a question about your PDF:")
 
         if query:
             with st.spinner("Thinking..."):
