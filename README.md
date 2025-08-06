@@ -3,5 +3,6 @@ hi all
 2. activate environment: .\namaofenv\Scripts\activate
 3. install all packages (contents in txt file): pip install -r requirements.txt
 4. install ipykernel : pip install ipykernel
-5. change API KEY using own key in file .env
-6. run python file using streamlit: streamlit run nameoffile.py
+5. create folder name .streamlit and file secrets.toml
+6. change API KEY using own key in file secrets.toml
+7. run python file using streamlit: streamlit run nameoffile.py
